@@ -83,11 +83,11 @@ print("       the error is estimated as the maximum from 1000 random points\n")
 
 # construct sparse grid
 grid.makeLocalPolynomialGrid(iDim, iOut, iDepth, which_basis, "localp")
-aPoints = grid.getPoints()
+aPoints = grid.getPoints()  #These are sparse grid points
 iNumP1 = aPoints.shape[0]
 aVals = np.empty([aPoints.shape[0], 1])
 for iI in range(aPoints.shape[0]):
-    aVals[iI] = math.cos(0.5 * math.pi * aPoints[iI][0]) * math.cos(0.5 * math.pi * aPoints[iI][1])
+    aVals[iI] = math.cos(0.5 * math.pi * aPoints[iI][0]) * math.cos(0.5 * math.pi * aPoints[iI][1])  # aVals is the value of function on sparse grid points
 grid.loadNeededPoints(aVals)
 
 # compute the error
