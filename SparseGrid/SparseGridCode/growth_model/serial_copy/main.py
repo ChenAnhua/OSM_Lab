@@ -28,10 +28,10 @@ import numpy as np
 #======================================================================
 # Start with Value Function Iteration
 
-# terminal value function
+# terminal/initial value function
 valnew=TasmanianSG.TasmanianSparseGrid()
 if (numstart==0):
-    valnew=interpol.sparse_grid(n_agents, iDepth)
+    valnew = interpol.sparse_grid(n_agents, iDepth)
     valnew.write("valnew_1." + str(numstart) + ".txt") #write file to disk for restart
 
 # value function during iteration
