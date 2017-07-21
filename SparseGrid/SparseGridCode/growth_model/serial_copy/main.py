@@ -31,7 +31,7 @@ import numpy as np
 # terminal/initial value function
 valnew=TasmanianSG.TasmanianSparseGrid()
 if (numstart==0):
-    valnew = interpol.sparse_grid(n_agents, iDepth, refinement_level, fTol)
+    valnew = interpol.sparse_grid(n_agents, iDepth , refinement_level, fTol)
     valnew.write("valnew_1." + str(numstart) + ".txt") #write file to disk for restart
 
 # value function during iteration
@@ -43,7 +43,7 @@ valold=valnew
 
 for i in range(numstart, numits):
     valnew=TasmanianSG.TasmanianSparseGrid()
-    valnew=interpol_iter.sparse_grid_iter(n_agents, iDepth, refinement_level, fTol, valold)
+    valnew=interpol_iter.sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol)
     valold=TasmanianSG.TasmanianSparseGrid()
     valold=valnew
     valnew.write("valnew_1." + str(i+1) + ".txt")
