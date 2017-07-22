@@ -16,9 +16,8 @@ import nonlinear_solver_iterate as solveriter
 
 #======================================================================
 
-def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):   
+def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta_vec, theta_prob):   
 
-    
     grid  = TasmanianSG.TasmanianSparseGrid()
 
     k_range=np.array([k_bar, k_up])
@@ -41,7 +40,11 @@ def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):
     
     file=open("comparison1.txt", 'w')
     for iI in range(iNumP1):
-        aVals[iI]=solveriter.iterate(aPoints[iI], n_agents, valold, theta)[0]       # We need to do something on changing this Valold
+        expectation = np.empty_like(aVals[iI])
+        for iT, theta  in enumerate(theta_vec):
+            new_expect = solveriter.iterate(aPoints[iI], n_agents, valold, theta)[0]
+            expectation += new_expect*theta_prob[iT]
+        aVals[iI]=expectation         # We need to do something on changing this Valold
         v=aVals[iI]*np.ones((1,1))
         to_print=np.hstack((aPoints[iI].reshape(1,n_agents), v))
         np.savetxt(file, to_print, fmt='%2.16f')
@@ -55,7 +58,11 @@ def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):
         aPoints = grid.getNeededPoints()
         aVals = np.empty([aPoints.shape[0], 1])
         for iI in range(aPoints.shape[0]):
-            aVals[iI]= solveriter.iterate(aPoints[iI], n_agents, valold, theta)[0]     # We need to do something on changing this Valold
+            expectation = np.empty_like(aVals[iI])
+            for iT, theta in enumerate(theta_vec):
+                new_expect = solveriter.iterate(aPoints[iI], n_agents, valold, theta)[0]
+                expectation += new_expect*theta_prob[iT]
+            aVals[iI]= expectation     # We need to do something on changing this Valold
             v = aVals[iI]*np.ones((1, 1))
             to_print=np.hstack(( aPoints[iI].reshape(1,n_agents), v))
             np.savetxt(file, to_print, fmt='%2.16f')

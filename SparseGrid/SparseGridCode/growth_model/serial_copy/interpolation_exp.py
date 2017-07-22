@@ -3,21 +3,22 @@
 #     This routine interfaces with the TASMANIAN Sparse grid
 #     The crucial part is 
 #
-#     aVals[iI]=solveriter.iterate(aPoints[iI], n_agents)[0]  
+#     aVals[iI]=solver.initial(aPoints[iI], n_agents)[0]  
 #     => at every gridpoint, we solve an optimization problem
 #
 #     Simon Scheidegger, 11/16 ; 07/17
+#
+#     Change it to ASG for homework purpose, Chen Anhua (Peter); 07/17
 #======================================================================
 
 import TasmanianSG
 import numpy as np
 from parameters import *
-import nonlinear_solver_iterate as solveriter
+import nonlinear_solver_initial as solver
 
 #======================================================================
 
-def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):   
-
+def sparse_grid(n_agents, iDepth, refinement_level, fTol, theta_vec, theta_prob):
     
     grid  = TasmanianSG.TasmanianSparseGrid()
 
@@ -30,8 +31,7 @@ def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):
         ranges[i]=k_range
 
     iDim=n_agents
-    iOut=1
-    #level of grid before refinement
+    # level of grid before refinement
     grid.makeLocalPolynomialGrid(iDim, iOut, iDepth, which_basis, "localp")
     grid.setDomainTransform(ranges)
 
@@ -39,14 +39,21 @@ def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):
     iNumP1=aPoints.shape[0]
     aVals=np.empty([iNumP1, 1])
     
-    file=open("comparison1.txt", 'w')
+    file=open("comparison0.txt", 'w')
+    
     for iI in range(iNumP1):
-        aVals[iI]=solveriter.iterate(aPoints[iI], n_agents, valold, theta)[0]       # We need to do something on changing this Valold
+        expectation = [solver.initial(aPoints[iI], n_agents, theta)[0] for theta in theta_vec]
+        expectation =  np.array(expectation)
+        expectation = np.dot(expectation, theta_prob.T)
+        #expectation = np.empty_like(aVals[iI])
+        #for iT, theta  in enumerate(theta_vec):
+        #    new_expect = solver.initial(aPoints[iI], n_agents, theta)[0]
+        #    expectation += new_expect*theta_prob[iT]
+        aVals[iI]=expectation    
         v=aVals[iI]*np.ones((1,1))
         to_print=np.hstack((aPoints[iI].reshape(1,n_agents), v))
         np.savetxt(file, to_print, fmt='%2.16f')
-    
-    
+        
     #file.close()
     grid.loadNeededPoints(aVals)
     #refinement level
@@ -55,18 +62,23 @@ def sparse_grid_iter(n_agents, iDepth, valold, refinement_level, fTol, theta):
         aPoints = grid.getNeededPoints()
         aVals = np.empty([aPoints.shape[0], 1])
         for iI in range(aPoints.shape[0]):
-            aVals[iI]= solveriter.iterate(aPoints[iI], n_agents, valold, theta)[0]     # We need to do something on changing this Valold
+            expectation = [solver.initial(aPoints[iI], n_agents, theta)[0] for theta in theta_vec]
+            expectation =  np.array(expectation)
+            expectation = np.dot(expectation, theta_prob.T)
+            aVals[iI]=expectation
             v = aVals[iI]*np.ones((1, 1))
-            to_print=np.hstack(( aPoints[iI].reshape(1,n_agents), v))
+            to_print=np.hstack((aPoints[iI].reshape(1,n_agents), v))
             np.savetxt(file, to_print, fmt='%2.16f')
 
-        grid.loadNeededPoints(aVals)    
+        grid.loadNeededPoints(aVals)
     
+        #aRes = grid.evaluateBatch(aPnts)
+        #fError1 = max(np.fabs(aRes[:,0] - aTres))
     file.close()
-    f=open("grid_iter.txt", 'w')
+    f=open("grid.txt", 'w')
     np.savetxt(f, aPoints, fmt='% 2.16f')
     f.close()
     
     return grid
-
 #======================================================================
+

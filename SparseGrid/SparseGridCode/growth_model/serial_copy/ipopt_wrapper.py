@@ -10,11 +10,13 @@ from parameters import *
 from econ import *
 import numpy as np
 
+
+
 #=======================================================================
 #   Objective Function to start VFI (in our case, the value function)
         
-def EV_F(X, k_init, n_agents):
-    
+def EV_F(X, k_init, n_agents):  # now with theta, we would have five different starting values.
+  
     # Extract Variables
     cons=X[0:n_agents]
     lab=X[n_agents:2*n_agents]
@@ -30,14 +32,25 @@ def EV_F(X, k_init, n_agents):
 # V infinity
 def V_INFINITY(k=[]):
     e=np.ones(len(k))
-    c=output_f(k,e)
-    v_infinity=utility(c,e)/(1-beta)
+    c_vec = [output_f(theta, k, e) for theta in theta_vec]
+    util_vec = [utility(c,e)/(1-beta) for c in c_vec]
+    util_vec = np.array(util_vec)
+    v_infinity = np.dot(util_vec, theta_prob.T)
+    #c = output_f(1, k, e)
+    #con =output_f(1, k,e)
+    #expectation = np.empty_like(con)
+    #for iT, theta in enumerate(theta_vec):
+    #    c=output_f(theta, k,e)
+    #    new_v = utility(c,e)/(1-beta)
+    #    expectation  += new_v*theta_prob[iT]
+    #v_infinity=expectation
+    #v_infinity = utility(c,e)/(1-beta)
     return v_infinity
 
 #=======================================================================
 #   Objective Function during VFI (note - we need to interpolate on an "old" sprase grid)
     
-def EV_F_ITER(X, k_init, n_agents, grid):
+def EV_F_ITER(X, k_init, n_agents, grid):  # grid is valold, therefore valold should be an expectation
     
     # Extract Variables
     cons=X[0:n_agents]
@@ -117,9 +130,9 @@ def EV_GRAD_F_ITER(X, k_init, n_agents, grid):
     return GRAD
        
 #======================================================================
-#   Equality constraints for the first time step of the model
+#   Equality constraints for the first time step of the model (Budget function)
             
-def EV_G(X, k_init, n_agents):
+def EV_G(X, k_init, n_agents, theta):
     N=len(X)
     M=3*n_agents+1  # number of constraints
     G=np.empty(M, float)
@@ -137,7 +150,7 @@ def EV_G(X, k_init, n_agents):
         G[i+2*n_agents]=inv[i]
     
     
-    f_prod=output_f(k_init, lab)
+    f_prod=output_f(theta, k_init, lab)
     Gamma_adjust=0.5*zeta*k_init*((inv/k_init - delta)**2.0)
     sectors_sum=cons + inv - delta*k_init - (f_prod - Gamma_adjust)
     G[3*n_agents]=np.sum(sectors_sum)
@@ -147,7 +160,7 @@ def EV_G(X, k_init, n_agents):
 #======================================================================
 #   Equality constraints during the VFI of the model
 
-def EV_G_ITER(X, k_init, n_agents):
+def EV_G_ITER(X, k_init, n_agents, theta):
     N=len(X)
     M=3*n_agents+1  # number of constraints
     G=np.empty(M, float)
@@ -165,7 +178,7 @@ def EV_G_ITER(X, k_init, n_agents):
         G[i+2*n_agents]=inv[i]
     
     
-    f_prod=output_f(k_init, lab)
+    f_prod=output_f(theta, k_init, lab)
     Gamma_adjust=0.5*zeta*k_init*((inv/k_init - delta)**2.0)
     sectors_sum=cons + inv - delta*k_init - (f_prod - Gamma_adjust)
     G[3*n_agents]=np.sum(sectors_sum)
@@ -176,7 +189,7 @@ def EV_G_ITER(X, k_init, n_agents):
 #   Computation (finite difference) of Jacobian of equality constraints 
 #   for first time step
     
-def EV_JAC_G(X, flag, k_init, n_agents):
+def EV_JAC_G(X, flag, k_init, n_agents, theta):
     N=len(X)
     M=3*n_agents+1
     NZ=M*N
@@ -197,13 +210,13 @@ def EV_JAC_G(X, flag, k_init, n_agents):
     else:
         # Finite Differences
         h=1e-4
-        gx1=EV_G(X, k_init, n_agents)
+        gx1=EV_G(X, k_init, n_agents, theta)
         
         for ixM in range(M):
             for ixN in range(N):
                 xAdj=np.copy(X)
                 xAdj[ixN]=xAdj[ixN]+h
-                gx2=EV_G(xAdj, k_init, n_agents)
+                gx2=EV_G(xAdj, k_init, n_agents, theta)
                 A[ixN + ixM*N]=(gx2[ixM] - gx1[ixM])/h
         return A
   
@@ -211,7 +224,7 @@ def EV_JAC_G(X, flag, k_init, n_agents):
 #   Computation (finite difference) of Jacobian of equality constraints 
 #   during iteration  
   
-def EV_JAC_G_ITER(X, flag, k_init, n_agents):
+def EV_JAC_G_ITER(X, flag, k_init, n_agents, theta):
     N=len(X)
     M=3*n_agents+1
     NZ=M*N
@@ -232,13 +245,13 @@ def EV_JAC_G_ITER(X, flag, k_init, n_agents):
     else:
         # Finite Differences
         h=1e-4
-        gx1=EV_G_ITER(X, k_init, n_agents)
+        gx1=EV_G_ITER(X, k_init, n_agents, theta)
         
         for ixM in range(M):
             for ixN in range(N):
                 xAdj=np.copy(X)
                 xAdj[ixN]=xAdj[ixN]+h
-                gx2=EV_G_ITER(xAdj, k_init, n_agents)
+                gx2=EV_G_ITER(xAdj, k_init, n_agents, theta)
                 A[ixN + ixM*N]=(gx2[ixM] - gx1[ixM])/h
         return A    
     
