@@ -1,0 +1,7 @@
+iteration 1 max error 11.488971 
+iteration 2 max error 7.133656 
+iteration 3 max error 6.324659 
+iteration 4 max error 5.635726 
+iteration 5 max error 5.038824 
+iteration 6 max error 4.512494 
+slurmstepd-midway432: error: *** JOB 33110656 ON midway432 CANCELLED AT 2017-08-02T15:14:23 ***
